@@ -42,7 +42,7 @@ function saveJsonFile(data, route){
 }
 
 // TODO: Configurar para recibir una carpeta con archivos e iterar sobre los archivos
-function getFileFromGithub(owner, repository, path){
+function getFilesFromGithub(owner, repository, path){
   return new Promise( (resolve, reject)=>{   
     const apiUrl = "https://api.github.com/";
     let endpoint= "repos/"+owner+"/"+repository+"/contents/"+path;
@@ -50,20 +50,24 @@ function getFileFromGithub(owner, repository, path){
     fetch(apiUrl + endpoint, {method:'GET', headers: {'Accept':'application/vnd.github.v3+json', 'Authorization' : 'Bearer ' + config.OAuthToken }})
     .then(response => response.json())
     .then((json)=>{
-      console.log(json);
+      //console.log(json);
       for (const i in json) {
-        console.log(json[i]);
-        fetch(json[i]['download_url'])
-        .then(res=>res.text())
-        .then((data)=>{        
-          saveJsonFile(data, json[i]['path']);
-          resolve(data);
-        })
-        .catch((err) => {
-          console.log(err);
-          reject(err);
-        });
-      }  
+        if(json[i]['type']!='dir'){
+          fetch(json[i]['download_url'])
+          .then(res=>res.text())
+          .then((data)=>{        
+            saveJsonFile(data, json[i]['path']);
+            resolve(data);
+          })
+          .catch((err) => {
+            console.log(err);
+            reject(err);
+          });
+        }else {
+          //Si es directorio cambia el path al directorio y obtiene los archivos.
+          getFilesFromGithub(owner, repository, path + '/' + json[i]['name']);
+        }
+      }      
     })
     .catch((err)=>{
       console.log(err);
@@ -72,4 +76,4 @@ function getFileFromGithub(owner, repository, path){
   });
 }
 
-module.exports = {saveJsonFile, getFileFromGithub}
+module.exports = {saveJsonFile, getFilesFromGithub}

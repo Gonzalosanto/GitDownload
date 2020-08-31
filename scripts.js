@@ -54,8 +54,8 @@ function getFilesFromGithub(owner, repository, path){
       for (const i in json) {
         if(json[i]['type']!='dir'){
           fetch(json[i]['download_url'])
-          .then(res=>res.text())
-          .then((data)=>{        
+          .then(res=>res.buffer())
+          .then((data)=>{  
             saveJsonFile(data, json[i]['path']);
             resolve(data);
           })
